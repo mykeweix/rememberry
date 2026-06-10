@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Rememberry" />
+  <title>Rememberry</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <style>
+    :root {
+      --bg:        #1a1a2e;
+      --surface:   #16213e;
+      --surface2:  #0f3460;
+      --accent:    #c084fc;
+      --accent-dim:#7c3aed33;
+      --text:      #f1f0fb;
+      --muted:     #a89fc0;
+      --border:    #2e2a45;
+      --done-col:  #4ade80;
+      --done-dim:  #16a34a33;
+      --danger:    #f87171;
+      --danger-dim:#991b1b33;
+      --radius:    14px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 52px 20px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .app-name {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions { display: flex; gap: 6px; }
+
+    .icon-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      position: relative;
+    }
+    .icon-btn:active { transform: scale(0.94); }
+    .icon-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+    .icon-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .badge {
+      position: absolute; top: 4px; right: 4px;
+      background: var(--accent);
+      color: #1a1a2e;
+      font-size: 9px; font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 4px;
+      min-width: 16px; text-align: center;
+      display: none;
+    }
+    .badge.show { display: block; }
+
+    /* ── Visibility bar ── */
+    #vis-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toggle-track {
+      width: 40px; height: 22px;
+      border-radius: 11px;
+      background: var(--accent);
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-track.off { background: var(--border); }
+    .toggle-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: white;
+      position: absolute;
+      top: 3px; right: 3px;
+      transition: right 0.2s;
+      pointer-events: none;
+    }
+    .toggle-track.off .toggle-thumb { right: 21px; }
+
+    /* ── Tab bar ── */
+    .tabs {
+      display: flex;
+      padding: 12px 20px 0;
+      gap: 6px;
+    }
+    .tab {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── List area ── */
+    .list-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0 120px;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    .task-item:active { background: var(--surface); }
+
+    .check-ring {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .check-ring:active { transform: scale(0.88); }
+    .check-ring.done {
+      background: var(--done-dim);
+      border-color: var(--done-col);
+    }
+    .check-ring svg { width: 13px; height: 13px; stroke: var(--done-col); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; display: none; }
+    .check-ring.done svg { display: block; }
+
+    .task-text {
+      flex: 1;
+      font-size: 16px;
+      line-height: 1.4;
+      color: var(--text);
+    }
+    .task-text.done {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .item-action {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      display: flex; align-items: center;
+      transition: color 0.12s, background 0.12s;
+    }
+    .item-action:active { transform: scale(0.9); }
+    .item-action.restore:active { color: var(--accent); background: var(--accent-dim); }
+    .item-action.delete:active { color: var(--danger); background: var(--danger-dim); }
+    .item-action svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 60px 32px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+    .empty p { font-size: 15px; line-height: 1.6; }
+
+    /* ── Add bar ── */
+    .add-bar {
+      position: fixed;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+
+    .add-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 10px 18px;
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .add-input::placeholder { color: var(--muted); }
+    .add-input:focus { border-color: var(--accent); }
+
+    .add-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: #1a1a2e;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .add-btn:active { opacity: 0.8; transform: scale(0.94); }
+
+    /* ── Clear all button ── */
+    .clear-all {
+      margin: 8px 20px;
+      padding: 10px;
+      border: 1px solid var(--danger);
+      border-radius: var(--radius-sm);
+      background: none;
+      color: var(--danger);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: calc(100% - 40px);
+      transition: background 0.12s;
+    }
+    .clear-all:active { background: var(--danger-dim); }
+    .clear-all svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── Hidden overlay ── */
+    .hidden-overlay {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px;
+      color: var(--muted);
+    }
+    .hidden-overlay svg { width: 48px; height: 48px; stroke: var(--muted); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.5; }
+    .hidden-overlay p { font-size: 15px; text-align: center; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="app-name">Rememberry</span>
+  <div class="header-actions">
+    <button class="icon-btn" id="vis-btn" aria-label="Toggle visibility">
+      <!-- eye icon -->
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+    <button class="icon-btn" id="done-tab-btn" aria-label="Completed items">
+      <!-- archive icon -->
+      <svg viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+      <span class="badge" id="done-badge"></span>
+    </button>
+  </div>
+</header>
+
+<div id="vis-bar">
+  <button class="toggle-track" id="toggle-track">
+    <div class="toggle-thumb"></div>
+  </button>
+  <span id="vis-label">list visible</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tab-active">my list</button>
+  <button class="tab" id="tab-done">completed</button>
+</div>
+
+<div class="list-area" id="list-area"></div>
+
+<div class="add-bar" id="add-bar">
+  <input class="add-input" id="add-input" placeholder="add something to remember…" maxlength="200" autocomplete="off" />
+  <button class="add-btn" id="add-btn" aria-label="Add task">+</button>
+</div>
+
+<script>
+  const STORAGE_KEY = 'rememberry_tasks';
+
+  let state = {
+    tasks: [],
+    nextId: 1,
+    listVisible: true,
+    showDone: false,
+    visBarOpen: false,
+  };
+
+  function load() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        state.tasks = parsed.tasks || [];
+        state.nextId = parsed.nextId || (state.tasks.length + 1);
+        state.listVisible = parsed.listVisible !== false;
+      }
+    } catch(e) {}
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        tasks: state.tasks,
+        nextId: state.nextId,
+        listVisible: state.listVisible,
+      }));
+    } catch(e) {}
+  }
+
+  // ── Icons ──
+  const ICON_CHECK = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const ICON_RESTORE = `<svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.02"/></svg>`;
+  const ICON_TRASH = `<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+  const ICON_TRASH_SM = `<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function render() {
+    const listArea = document.getElementById('list-area');
+    const addBar = document.getElementById('add-bar');
+    const doneBadge = document.getElementById('done-badge');
+    const tabActive = document.getElementById('tab-active');
+    const tabDone = document.getElementById('tab-done');
+
+    const active = state.tasks.filter(t => !t.done);
+    const done = state.tasks.filter(t => t.done);
+
+    doneBadge.textContent = done.length;
+    doneBadge.classList.toggle('show', done.length > 0);
+
+    tabActive.classList.toggle('active', !state.showDone);
+    tabDone.classList.toggle('active', state.showDone);
+
+    // Hidden state
+    if (!state.listVisible && !state.showDone) {
+      listArea.innerHTML = '';
+      const overlay = document.createElement('div');
+      overlay.className = 'hidden-overlay';
+      overlay.innerHTML = `
+        <svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        <p>your list is hidden<br>tap the eye icon to show it</p>`;
+      listArea.appendChild(overlay);
+      addBar.style.display = 'none';
+      return;
+    }
+
+    addBar.style.display = state.showDone ? 'none' : 'flex';
+
+    if (state.showDone) {
+      if (done.length === 0) {
+        listArea.innerHTML = `<div class="empty"><div class="empty-icon">✓</div><p>nothing finished yet.<br>complete a task and it'll appear here.</p></div>`;
+        return;
+      }
+      let html = done.map(t => `
+        <div class="task-item">
+          <div class="check-ring done">${ICON_CHECK}</div>
+          <span class="task-text done">${esc(t.text)}</span>
+          <button class="item-action restore" onclick="restoreTask(${t.id})" aria-label="Restore">${ICON_RESTORE}</button>
+          <button class="item-action delete" onclick="deleteTask(${t.id})" aria-label="Delete">${ICON_TRASH}</button>
+        </div>`).join('');
+      html += `<button class="clear-all" onclick="clearAll()">${ICON_TRASH_SM} clear all completed</button>`;
+      listArea.innerHTML = html;
+      return;
+    }
+
+    if (active.length === 0) {
+      listArea.innerHTML = `<div class="empty"><div class="empty-icon">🫐</div><p>nothing to remember.<br>add something below.</p></div>`;
+      return;
+    }
+
+    listArea.innerHTML = active.map(t => `
+      <div class="task-item">
+        <div class="check-ring" onclick="markDone(${t.id})" aria-label="Mark done"></div>
+        <span class="task-text">${esc(t.text)}</span>
+      </div>`).join('');
+  }
+
+  window.markDone = function(id) {
+    const t = state.tasks.find(t => t.id === id);
+    if (t) { t.done = true; save(); render(); }
+  };
+  window.restoreTask = function(id) {
+    const t = state.tasks.find(t => t.id === id);
+    if (t) { t.done = false; state.showDone = false; save(); render(); }
+  };
+  window.deleteTask = function(id) {
+    state.tasks = state.tasks.filter(t => t.id !== id);
+    save(); render();
+  };
+  window.clearAll = function() {
+    if (confirm('Remove all completed items permanently?')) {
+      state.tasks = state.tasks.filter(t => !t.done);
+      save(); render();
+    }
+  };
+
+  function addTask() {
+    const input = document.getElementById('add-input');
+    const val = input.value.trim();
+    if (!val) return;
+    state.tasks.unshift({ id: state.nextId++, text: val, done: false });
+    input.value = '';
+    save(); render();
+  }
+
+  document.getElementById('add-btn').addEventListener('click', addTask);
+  document.getElementById('add-input').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+
+  document.getElementById('tab-active').addEventListener('click', () => { state.showDone = false; render(); });
+  document.getElementById('tab-done').addEventListener('click', () => { state.showDone = true; render(); });
+
+  document.getElementById('done-tab-btn').addEventListener('click', () => {
+    state.showDone = !state.showDone;
+    render();
+  });
+
+  document.getElementById('vis-btn').addEventListener('click', () => {
+    state.visBarOpen = !state.visBarOpen;
+    document.getElementById('vis-bar').style.display = state.visBarOpen ? 'flex' : 'none';
+    document.getElementById('vis-btn').classList.toggle('active', state.visBarOpen);
+  });
+
+  document.getElementById('toggle-track').addEventListener('click', () => {
+    state.listVisible = !state.listVisible;
+    document.getElementById('toggle-track').classList.toggle('off', !state.listVisible);
+    document.getElementById('vis-label').textContent = state.listVisible ? 'list visible' : 'list hidden';
+    save(); render();
+  });
+
+  load();
+  // sync toggle pill state
+  if (!state.listVisible) {
+    document.getElementById('toggle-track').classList.add('off');
+    document.getElementById('vis-label').textContent = 'list hidden';
+  }
+  render();
+
+  // ── Service Worker ──
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
